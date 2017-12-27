@@ -1,0 +1,111 @@
+--- origsrc/kbilliards-0.8.7b/admin/acinclude.m4.in	2004-10-28 07:48:10.000000000 -0500
++++ src/kbilliards-0.8.7b/admin/acinclude.m4.in	2017-12-26 15:10:35.801992300 -0600
+@@ -2796,8 +2796,18 @@ else
+ fi
+ ])
+ 
++AC_DEFUN([AC_CHECK_COMPILERS_CC],
++[ 
++  dnl this prevents stupid AC_PROG_CC to add "-g" to the default CFLAGS
++  CFLAGS=" $CFLAGS"
++  AC_PROG_CC
++  CXXFLAGS=" $CXXFLAGS"
++  AC_PROG_CXX
++])
++
+ AC_DEFUN([AC_CHECK_COMPILERS],
+ [
++  AC_REQUIRE([AC_CHECK_COMPILERS_CC])
+   AC_ARG_ENABLE(debug,
+ 	        AC_HELP_STRING([--enable-debug=ARG],[enables debug symbols (yes|no|full) [default=no]]),
+   [
+@@ -2856,11 +2866,6 @@ AC_DEFUN([AC_CHECK_COMPILERS],
+     [kde_use_profiling="no"]
+   )
+ 
+-  dnl this prevents stupid AC_PROG_CC to add "-g" to the default CFLAGS
+-  CFLAGS=" $CFLAGS"
+-
+-  AC_PROG_CC 
+-
+   AC_PROG_CPP
+ 
+   if test "$GCC" = "yes"; then
+@@ -2889,10 +2894,6 @@ AC_DEFUN([AC_CHECK_COMPILERS],
+      LDFLAGS=""
+   fi
+ 
+-  CXXFLAGS=" $CXXFLAGS"
+-
+-  AC_PROG_CXX
+-
+   if test "$GXX" = "yes" || test "$CXX" = "KCC"; then
+     if test "$kde_use_debug_code" != "no"; then
+       if test "$CXX" = "KCC"; then
+@@ -3049,8 +3050,8 @@ AC_REQUIRE([AC_ENABLE_STATIC])
+ AC_REQUIRE([AC_LIBTOOL_DLOPEN])
+ AC_REQUIRE([KDE_CHECK_LIB64])
+ 
+-AC_OBJEXT
+-AC_EXEEXT
++AC_REQUIRE([AC_OBJEXT])
++AC_REQUIRE([AC_EXEEXT])
+ 
+ AM_PROG_LIBTOOL
+ AC_LIBTOOL_CXX
+--- origsrc/kbilliards-0.8.7b/admin/cvs.sh	2004-10-28 07:48:10.000000000 -0500
++++ src/kbilliards-0.8.7b/admin/cvs.sh	2017-12-26 15:08:54.107939500 -0600
+@@ -29,7 +29,7 @@ check_autotool_versions()
+ {
+ AUTOCONF_VERSION=`$AUTOCONF --version | head -n 1`
+ case $AUTOCONF_VERSION in
+-  Autoconf*2.5* | autoconf*2.5* ) : ;;
++  Autoconf*2.5* | autoconf*2.5* | autoconf*2.6* ) : ;;
+   "" )
+     echo "*** AUTOCONF NOT FOUND!."
+     echo "*** KDE requires autoconf 2.52, 2.53 or 2.54"
+@@ -44,7 +44,7 @@ esac
+  
+ AUTOHEADER_VERSION=`$AUTOHEADER --version | head -n 1`
+ case $AUTOHEADER_VERSION in
+-  Autoconf*2.5* | autoheader*2.5* ) : ;;
++  Autoconf*2.5* | autoheader*2.5* | autoheader*2.6* ) : ;;
+   "" )
+     echo "*** AUTOHEADER NOT FOUND!."
+     echo "*** KDE requires autoheader 2.52 or 2.53 (part of autoconf)"
+@@ -64,7 +64,7 @@ case $AUTOMAKE_STRING in
+     echo "*** KDE requires automake 1.6.1 or newer"
+     exit 1
+     ;;
+-  automake*1.6.* | automake*1.7* | automake*1.8.* | automake*1.9* ) : ;;
++  automake*) : ;;
+   "" )
+     echo "*** AUTOMAKE NOT FOUND!."
+     echo "*** KDE requires automake 1.6.1 or newer"
+@@ -129,7 +129,7 @@ if egrep "^AM_CONFIG_HEADER" configure.i
+ fi
+ 
+ echo "*** Creating Makefile templates"
+-$AUTOMAKE || exit 1
++$AUTOMAKE --add-missing --copy --force-missing || exit 1
+ if test -z "$UNSERMAKE"; then
+   echo "*** Postprocessing Makefile templates"
+   perl -w admin/am_edit || exit 1
+--- origsrc/kbilliards-0.8.7b/admin/detect-autoconf.sh	2004-10-28 07:48:10.000000000 -0500
++++ src/kbilliards-0.8.7b/admin/detect-autoconf.sh	2017-12-26 15:22:22.799895100 -0600
+@@ -66,12 +66,9 @@ checkAutoheader()
+ 
+ checkAutomakeAclocal ()
+ {
+- if test -x "`$WHICH automake-1.6 2>/dev/null`" ; then
+-    AUTOMAKE="`$WHICH automake-1.6`"
+-    ACLOCAL="`$WHICH aclocal-1.6`"
+-  elif test -x "`$WHICH automake-1.7 2>/dev/null`" ; then
+-    AUTOMAKE="`$WHICH automake-1.7`"
+-    ACLOCAL="`$WHICH aclocal-1.7`"
++ if test -x "`$WHICH automake 2>/dev/null`" ; then
++    AUTOMAKE="`$WHICH automake`"
++    ACLOCAL="`$WHICH aclocal`"
+   fi
+   if test -n "$UNSERMAKE"; then 
+      AUTOMAKE="$UNSERMAKE"

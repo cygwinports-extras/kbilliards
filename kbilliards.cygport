@@ -1,0 +1,50 @@
+inherit kde3
+
+NAME="kbilliards"
+VERSION=0.8.7b
+RELEASE=1
+CATEGORY="Games"
+SUMMARY="KDE 3 billiards simulator"
+DESCRIPTION="A funny billiards simulator game under KDE 3"
+HOMEPAGE="http://www.hostnotfound.it/kbilliards.php"
+SRC_URI="http://www.hostnotfound.it/kbilliards/kbilliards-${VERSION}.tar.bz2"
+# too old to use kde-3.5.10 patches
+PATCH_URI="
+	0.8.7b-admin.patch
+	0.8.7b-gcc4.patch
+"
+
+CYGPORT_USE_UNSTABLE_API=1
+src_unpack_hook() {
+	check_prog_req bzip2
+	check_prog_req pngcrush
+	check_prog_req xxd
+
+	dos2unix ChangeLog
+
+	# fix corrupt PNGs
+	pngcrush -ow -fix media/balls/ball_shadow.png
+	pngcrush -ow -fix media/balls/ball_shadowb.png
+	mv media/maps/kbilliards2004.kbm media/maps/kbilliards2004.xml.bz2
+	bunzip2 media/maps/kbilliards2004.xml.bz2
+	grep '<data length="342162">' media/maps/kbilliards2004.xml | sed -e 's/^ *<data length="[^"]*">//g' -e 's!</data>$!!g' | xxd -r -p - media/maps/background.png
+	grep '<data length="142617">' media/maps/kbilliards2004.xml | sed -e 's/^ *<data length="[^"]*">//g' -e 's!</data>$!!g' | xxd -r -p - media/maps/edges.png
+	grep '<data length="7910">' media/maps/kbilliards2004.xml | sed -e 's/^ *<data length="[^"]*">//g' -e 's!</data>$!!g' | xxd -r -p - media/maps/holes.png
+	pngcrush -ow -fix media/maps/background.png
+	pngcrush -ow -fix media/maps/edges.png
+	pngcrush -ow -fix media/maps/holes.png
+	echo 's!<data length="342162">[^<]*</data>!<data length="'`wc -c media/maps/background.png | sed 's/ .*$//g'`'">'`xxd -p -c 999999 media/maps/background.png`'</data>!g;s!<data length="142617">[^<]*</data>!<data length="'`wc -c media/maps/edges.png | sed 's/ .*$//g'`'">'`xxd -p -c 999999 media/maps/edges.png`'</data>!g;s!<data length="7910">[^<]*</data>!<data length="'`wc -c media/maps/holes.png | sed 's/ .*$//g'`'">'`xxd -p -c 999999 media/maps/holes.png`'</data>!g' >media/maps/sedscript.txt
+	rm -f media/maps/background.png media/maps/edges.png media/maps/holes.png
+	sed -i -f media/maps/sedscript.txt media/maps/kbilliards2004.xml
+	rm -f media/maps/sedscript.txt
+	bzip2 -9 media/maps/kbilliards2004.xml
+	mv media/maps/kbilliards2004.xml.bz2 media/maps/kbilliards2004.kbm
+
+	# fix missing semicolon at the end of the Categories list in the .desktop file
+	sed -i -e 's/^\(Categories=.*\)$/\1\;/g' src/${NAME}.desktop
+}
+
+DIFF_EXCLUDES="Makefile"
+
+WANT_AUTOMAKE=1.9
+MAKEOPTS+=" kdelnkdir=/usr/share/applications"

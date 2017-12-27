@@ -1,0 +1,10 @@
+--- origsrc/kbilliards-0.8.7b/src/aiplayer.cpp	2006-06-03 12:42:26.000000000 -0500
++++ src/kbilliards-0.8.7b/src/aiplayer.cpp	2017-12-26 15:30:11.420416200 -0600
+@@ -20,6 +20,7 @@
+ #include "aiplayer.h"
+ #include <iostream>
+ #include <sstream>
++#include <cstdlib>
+ 
+ 
+ #include <qnamespace.h>
